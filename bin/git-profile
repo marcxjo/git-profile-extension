@@ -89,62 +89,63 @@ print_info_msgs() {
 }
 
 profile_exists() {
-  local _profile_fqp="$1"
+  local _profile_path="$1"
 
-  [[ -d ${_profile_fqp} ]]
+  [[ -d ${_profile_path} ]]
 }
 
-make_profile() {
-  local _profile_fqp="$1"
+get_profile_path() {
+  local _profile_name="$1"
 
-  mkdir -p "${_profile_fqp}"
+  echo "${GIT_PROFILE_CONFIG_HOME}/${_profile_name}"
+}
 
-  touch "${_profile_fqp}/config"
+init_profile() {
+  local _profile_path="$1"
+
+  mkdir -p "${_profile_path}"
+
+  touch "${_profile_path}/config"
 }
 
 git_profile_add() {
-  local _profile_fqp="$1"
+  local _profile_path="$1"
   local -i _status=0
 
   # TODO: support the null-arg case
   # We'll let the user specify a profile name interactively...
   # maybe even do some initial profile config
-  [[ -z "${_profile_fqp##*/}" ]] &&
+  [[ -z "${_profile_path##*/}" ]] &&
     append_err_msg "cannot add profile: a name was not specified" &&
     status=1
 
-  [[ -d "$_profile_fqp" ]] &&
+  [[ -d "$_profile_path" ]] &&
     append_err_msg "cannot add profile: directory already exists" &&
     status=1
 
   [[ $status -eq 0 ]] || return "$status"
 
-  make_profile "$_profile_fqp" &&
-    append_info_msg "successfully created empty profile ${_profile_fqp##*/}" &&
-    append_info_msg "use \`git profile ${_profile_fqp##*/} config\` to add profile-specific settings"
+  init_profile "$_profile_path" &&
+    append_info_msg "successfully created empty profile ${_profile_path##*/}" &&
+    append_info_msg "use \`git profile ${_profile_path##*/} config\` to add profile-specific settings"
 }
 
 ###############################################################################
 
 main() {
-  local _arg_1="$1"
-  shift
-
-  local _profile
-
   # TODO: add support for 'rm' command
-  case "$_arg_1" in
+  case "$1" in
   'add')
-    _profile="$1"
-    git_profile_add "${GIT_PROFILE_CONFIG_HOME%/}/${_profile}"
+    _profile_path=$(get_profile_path "$2")
+    git_profile_add "$_profile_path"
     status=$?
     print_err_msgs
     print_info_msgs
     exit $status
     ;;
   *)
-    _profile="$_arg_1"
-    exec env GIT_CONFIG_GLOBAL="$_profile" git "$@"
+    _profile_path=$(get_profile_path "$1")
+    exec env GIT_CONFIG_GLOBAL="${_profile_path}/config" git "${@:2}"
     ;;
   esac
 }
