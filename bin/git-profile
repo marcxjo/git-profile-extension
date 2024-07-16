@@ -1,0 +1,152 @@
+#!/bin/bash
+
+# Disable check for using source with a non-constant path value
+# We control the input, but we also want to keep it flexible
+# shellcheck disable=SC1090
+
+# Variables ###################################################################
+
+declare -r SCRIPT_NAME="${0##*/}"
+
+declare -r GIT_PROFILE_CONFIG_HOME="${GIT_PROFILE_CONFIG_HOME:-${HOME}/.config/git/profiles}"
+declare -r GIT_PROFILE_LIB_DIR="${GIT_PROFILE_LIB_DIR:-${HOME}/.local/lib/git-profile}"
+
+# Hint to shellcheck that we do source library scripts
+# shellcheck source=../lib/common.sh
+. "${GIT_PROFILE_LIB_DIR%/}/lib/common.sh"
+
+# TFM #########################################################################
+
+usage() {
+  cat <<EOF
+NAME
+    $SCRIPT_NAME - perform Git operations using a specified global configuration
+
+SYNOPSIS
+    git profile PROFILE COMMAND [OPTIONS]
+    git profile add
+
+
+DESCRIPTION
+    Parameters:
+
+    PROFILE
+        The name of the Git profile whose respective configuration file should
+        be used as the global configuration for the current command
+
+    COMMAND
+        Any operation available to Git, whether built-in or exposed via extension
+
+    OPTIONS
+        Any options consumed by COMMAND.
+
+    Available actions:
+
+    rm
+        Delete the repos cache without rebuilding
+
+    update
+        Rebuild the repos cache to reflect the current state of your projects directory
+
+
+    Environment variables:
+
+    GIT_PROFILE_CONFIG_HOME
+        Defines the directory where Git profiles are stored.
+        Defaults to \${CONFIG_HOME}/.git/profiles, where \${CONFIG_HOME} is
+        equal to \${XDG_CONFIG_HOME} when set, otherwise \${HOME}/.config.
+
+EOF
+}
+
+# Functions ###################################################################
+
+# Suppress warnings about unused array - we pass by name
+# shellcheck disable=SC2034
+declare -a GIT_PROFILE_ERR_MSGS=()
+declare -a GIT_PROFILE_INFO_MSGS=()
+
+append_err_msg() {
+  local _msg="${*}"
+
+  array_append_msg GIT_PROFILE_ERR_MSGS "[ERR] ${SCRIPT_NAME}: ${_msg}"
+}
+
+print_err_msgs() {
+  [[ ${#GIT_PROFILE_ERR_MSGS[@]} -ne 0 ]] &&
+    printf '%s\n' "${GIT_PROFILE_ERR_MSGS[@]}"
+}
+
+append_info_msg() {
+  local _msg="${*}"
+
+  array_append_msg GIT_PROFILE_INFO_MSGS "[INFO] ${SCRIPT_NAME}: ${_msg}"
+}
+
+print_info_msgs() {
+  [[ ${#GIT_PROFILE_INFO_MSGS[@]} -ne 0 ]] &&
+    printf '%s\n' "${GIT_PROFILE_INFO_MSGS[@]}"
+}
+
+profile_exists() {
+  local _profile_fqp="$1"
+
+  [[ -d ${_profile_fqp} ]]
+}
+
+make_profile() {
+  local _profile_fqp="$1"
+
+  mkdir -p "${_profile_fqp}"
+
+  touch "${_profile_fqp}/config"
+}
+
+git_profile_add() {
+  local _profile_fqp="$1"
+  local -i _status=0
+
+  # TODO: support the null-arg case
+  # We'll let the user specify a profile name interactively...
+  # maybe even do some initial profile config
+  [[ -z "${_profile_fqp##*/}" ]] &&
+    append_err_msg "cannot add profile: a name was not specified" &&
+    status=1
+
+  [[ -d "$_profile_fqp" ]] &&
+    append_err_msg "cannot add profile: directory already exists" &&
+    status=1
+
+  [[ $status -eq 0 ]] || return "$status"
+
+  make_profile "$_profile_fqp" &&
+    append_info_msg "successfully created empty profile ${_profile_fqp##*/}" &&
+    append_info_msg "use \`git profile ${_profile_fqp##*/} config\` to add profile-specific settings"
+}
+
+###############################################################################
+
+main() {
+  local _arg_1="$1"
+  shift
+
+  local _profile
+
+  # TODO: add support for 'rm' command
+  case "$_arg_1" in
+  'add')
+    _profile="$1"
+    git_profile_add "${GIT_PROFILE_CONFIG_HOME%/}/${_profile}"
+    status=$?
+    print_err_msgs
+    print_info_msgs
+    exit $status
+    ;;
+  *)
+    _profile="$_arg_1"
+    exec env GIT_CONFIG_GLOBAL="$_profile" git "$@"
+    ;;
+  esac
+}
+
+main "$@"
