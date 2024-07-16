@@ -13,7 +13,7 @@ declare -r GIT_PROFILE_LIB_DIR="${GIT_PROFILE_LIB_DIR:-${HOME}/.local/lib/git-pr
 
 # Hint to shellcheck that we do source library scripts
 # shellcheck source=../lib/common.sh
-. "${GIT_PROFILE_LIB_DIR%/}/lib/common.sh"
+. "${GIT_PROFILE_LIB_DIR%/}/common.sh"
 
 # TFM #########################################################################
 
