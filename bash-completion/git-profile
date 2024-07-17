@@ -1,0 +1,71 @@
+#!/bin/bash
+
+source /usr/share/bash-completion/completions/git
+
+shopt -s nullglob
+
+__git_profile_get_matching_profile_names() {
+  local -r cur="$1"
+  local -r profiles_dir="$2"
+  local -a profiles=()
+
+  for profile_dir in "${profiles_dir%/}/$cur"*; do
+    profiles+=("${profile_dir##*/}")
+  done
+
+  echo "${profiles[@]}"
+}
+
+_git_profile() {
+  local -r _cur="${COMP_WORDS[COMP_CWORD]}"
+  local -r profiles_dir="${GIT_PROFILE_CONFIG_HOME:-${HOME}/.config/git/profiles}"
+
+  local -a profiles
+  local -a profile_opt_arg_choices
+
+  local profile
+
+  case $COMP_CWORD in
+  0 | 1)
+    return
+    ;;
+  2)
+    profiles=("$(__git_profile_get_matching_profile_names "$_cur" "$profiles_dir")")
+    profile_opt_arg_choices=("${profiles[@]}" 'add')
+
+    __gitcomp "${profile_opt_arg_choices[*]}"
+    return
+    ;;
+  *)
+    local -r profile_cmd_arg=${COMP_WORDS[2]}
+
+    if [[ "$profile_cmd_arg" == 'add' ]]; then
+      # git-profile subcommand - takes no args
+      return
+    fi
+
+    profiles=("$(__git_profile_get_matching_profile_names "$profile_cmd_arg" "$profiles_dir")")
+
+    if [[ "${#profiles[@]}" == 0 ]]; then
+      # Unsupported scenario
+      return
+    fi
+
+    profile="${profiles_dir%/}/${profile_cmd_arg}/config"
+    ;;
+  esac
+
+  local -r OLD_COMP_SUBSTR="${COMP_WORDS[*]:1:2}"
+  local -r COMP_WORDS_REBUILT=('git' "${COMP_WORDS[@]:3}")
+
+  # Forward a Git command line without the `profile` option and arg so that we
+  # can take advantage of completion for all available commands
+  # Note that we substract the trailing space from COMP_POINT
+  # to prevent displacing the completion cursor
+  COMP_WORDS=("${COMP_WORDS_REBUILT[@]}")
+  COMP_LINE="${COMP_WORDS_REBUILT[*]}"
+  COMP_CWORD=$((COMP_CWORD - 2))
+  COMP_POINT=$((COMP_POINT - ${#OLD_COMP_SUBSTR} - 1))
+
+  GIT_CONFIG_GLOBAL="$profile" __git_func_wrap __git_main
+}
