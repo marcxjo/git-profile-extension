@@ -95,13 +95,13 @@ profile_exists() {
 }
 
 get_profile_path() {
-  local _profile_name="$1"
+  local -r _profile_name="$1"
 
   echo "${GIT_PROFILE_CONFIG_HOME}/${_profile_name}"
 }
 
 init_profile() {
-  local _profile_path="$1"
+  local -r _profile_path="$1"
 
   mkdir -p "${_profile_path}"
 
