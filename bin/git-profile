@@ -25,7 +25,7 @@ NAME
 
 SYNOPSIS
     git profile PROFILE COMMAND [OPTIONS]
-    git profile add
+    git profile add PROFILE
 
 
 DESCRIPTION
@@ -39,15 +39,12 @@ DESCRIPTION
         Any operation available to Git, whether built-in or exposed via extension
 
     OPTIONS
-        Any options consumed by COMMAND.
+        Any options consumed by COMMAND
 
     Available actions:
 
-    rm
-        Delete the repos cache without rebuilding
-
-    update
-        Rebuild the repos cache to reflect the current state of your projects directory
+    add
+        Creates a new profile configuration named PROFILE
 
 
     Environment variables:
