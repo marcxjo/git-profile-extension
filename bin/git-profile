@@ -7,9 +7,10 @@
 # Variables ####################################################################
 
 declare -r SCRIPT_NAME="${0##*/}"
-
-declare -r GIT_PROFILE_CONFIG_HOME="${GIT_PROFILE_CONFIG_HOME:-${HOME}/.config/git/profiles}"
 declare -r GIT_PROFILE_LIB_DIR="${GIT_PROFILE_LIB_DIR:-${HOME}/.local/lib/git-profile}"
+
+declare -r CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+declare -r GIT_PROFILE_CONFIG_HOME="${CONFIG_HOME%/}/git/profiles"
 
 # Hint to shellcheck that we do source library scripts
 # shellcheck source=../lib/common.sh
@@ -89,71 +90,106 @@ print_info_msgs() {
 }
 
 profile_exists() {
-  local _profile_path="$1"
+  local _profile_config_path="$1"
 
-  [[ -d ${_profile_path} ]]
+  [[ -e ${_profile_config_path} ]]
 }
 
-get_profile_path() {
+can_read_profile() {
+  local _profile_config_path="$1"
+
+  [[ -r ${_profile_config_path} ]]
+}
+
+get_profile_config_path() {
   local -r _profile_name="$1"
 
-  echo "${GIT_PROFILE_CONFIG_HOME}/${_profile_name}"
+  echo "${GIT_PROFILE_CONFIG_HOME}/${_profile_name}/config"
 }
 
 init_profile() {
-  local -r _profile_path="$1"
+  local -r _profile_config_path="$1"
+  local -r _profile_config_dir="${_profile_config_path%/*}"
 
-  mkdir -p "${_profile_path}"
-
-  touch "${_profile_path}/config"
+  mkdir -p "${_profile_config_dir}"
+  touch "${_profile_config_path}"
 }
 
 # Subcommands ##################################################################
 
 git_profile_add() {
-  local -r _profile_path="$1"
+  local -r _profile_name="$1"
   local -i _status=0
 
   # TODO: support the null-arg case
   # We'll let the user specify a profile name interactively...
   # maybe even do some initial profile config
-  [[ -z "${_profile_path##*/}" ]] &&
+  [[ -z "${_profile_name}" ]] &&
     append_err_msg "cannot add profile: a name was not specified" &&
     status=1
 
-  [[ -d "$_profile_path" ]] &&
-    append_err_msg "cannot add profile: directory already exists" &&
+  local -r _profile_config_path=$(get_profile_config_path "$_profile_name")
+
+  profile_exists "${_profile_config_path}" &&
+    append_err_msg "cannot add profile: a configuration with name ${_profile_name} already exists" &&
     status=1
 
   [[ $status -eq 0 ]] || return "$status"
 
-  init_profile "$_profile_path" &&
-    append_info_msg "successfully created empty profile ${_profile_path##*/}" &&
-    append_info_msg "use \`git profile ${_profile_path##*/} config\` to add profile-specific settings"
+  init_profile "$_profile_config_path" &&
+    append_info_msg "successfully created empty profile ${_profile_name}" &&
+    append_info_msg "use \`git profile ${_profile_name} config\` to add profile-specific settings"
+}
+
+# Not a subcommand per se, but for every branching pathway in main we want to
+# have a function that can delegate any related config, validation, or execution
+# to the utility functions below
+git_profile_exec_git_validate_profile() {
+  local -r _profile_name="$1"
+  local -i status=0
+
+  [[ -z "${_profile_name}" ]] &&
+    append_err_msg "cannot validate profile: a name was not specified" &&
+    status=1
+
+  [[ $status -eq 0 ]] || return 0
+
+  local -r _profile_config_path=$(get_profile_config_path "$_profile_name")
+
+  ! can_read_profile "$_profile_config_path" &&
+    append_err_msg "cannot validate profile: config does not exist or is not readable" &&
+    status=1
+
+  echo "$_profile_config_path"
 }
 
 ################################################################################
 
 main() {
-  local _profile_path
+  local _profile_name
+  local _profile_config_path
 
   # TODO: add support for 'rm' command
   case "$1" in
   'add')
-    _profile_path=$(get_profile_path "$2")
-
-    git_profile_add "$_profile_path"
+    _profile_name="$2"
+    git_profile_add "$_profile_name"
     ;;
   *)
-    _profile_path=$(get_profile_path "$1")
-
-    exec env GIT_CONFIG_GLOBAL="${_profile_path}/config" git "${@:2}"
+    _profile_name="$1"
+    _profile_config_path=$(git_profile_exec_git_validate_profile "$_profile_name")
     ;;
   esac
 
-  status=$?
+  local -i status=$?
   print_err_msgs
   print_info_msgs
+  [[ $status -ne 0 ]] &&
+    usage &&
+    exit $status
+
+  [[ -n "$_profile_config_path" ]] &&
+    exec env GIT_CONFIG_GLOBAL="${_profile_config_path}" git "${@:2}"
 
   exit $status
 }
