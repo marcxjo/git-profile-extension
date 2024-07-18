@@ -41,6 +41,7 @@ DESCRIPTION
     OPTIONS
         Any options consumed by COMMAND
 
+
     Available actions:
 
     add
@@ -162,6 +163,11 @@ git_profile_exec_git_validate_profile() {
 
 ################################################################################
 
+print_log_msgs() {
+  print_err_msgs
+  print_info_msgs
+}
+
 main() {
   local _profile_name
   local _profile_config_path
@@ -179,8 +185,7 @@ main() {
   esac
 
   local -i status=$?
-  print_err_msgs
-  print_info_msgs
+  print_log_msgs
   [[ $status -ne 0 ]] &&
     usage &&
     exit $status
