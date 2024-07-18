@@ -141,17 +141,21 @@ main() {
   case "$1" in
   'add')
     _profile_path=$(get_profile_path "$2")
+
     git_profile_add "$_profile_path"
-    status=$?
-    print_err_msgs
-    print_info_msgs
-    exit $status
     ;;
   *)
     _profile_path=$(get_profile_path "$1")
+
     exec env GIT_CONFIG_GLOBAL="${_profile_path}/config" git "${@:2}"
     ;;
   esac
+
+  status=$?
+  print_err_msgs
+  print_info_msgs
+
+  exit $status
 }
 
 main "$@"
