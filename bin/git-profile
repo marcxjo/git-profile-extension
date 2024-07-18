@@ -4,7 +4,7 @@
 # We control the input, but we also want to keep it flexible
 # shellcheck disable=SC1090
 
-# Variables ###################################################################
+# Variables ####################################################################
 
 declare -r SCRIPT_NAME="${0##*/}"
 
@@ -15,7 +15,7 @@ declare -r GIT_PROFILE_LIB_DIR="${GIT_PROFILE_LIB_DIR:-${HOME}/.local/lib/git-pr
 # shellcheck source=../lib/common.sh
 . "${GIT_PROFILE_LIB_DIR%/}/common.sh"
 
-# TFM #########################################################################
+# TFM ##########################################################################
 
 usage() {
   cat <<EOF
@@ -59,7 +59,7 @@ DESCRIPTION
 EOF
 }
 
-# Functions ###################################################################
+# Functions ####################################################################
 
 # Suppress warnings about unused array - we pass by name
 # shellcheck disable=SC2034
@@ -67,7 +67,7 @@ declare -a GIT_PROFILE_ERR_MSGS=()
 declare -a GIT_PROFILE_INFO_MSGS=()
 
 append_err_msg() {
-  local _msg="${*}"
+  local -r _msg="$*"
 
   array_append_msg GIT_PROFILE_ERR_MSGS "[ERR] ${SCRIPT_NAME}: ${_msg}"
 }
@@ -78,7 +78,7 @@ print_err_msgs() {
 }
 
 append_info_msg() {
-  local _msg="${*}"
+  local -r _msg="$*"
 
   array_append_msg GIT_PROFILE_INFO_MSGS "[INFO] ${SCRIPT_NAME}: ${_msg}"
 }
@@ -108,8 +108,10 @@ init_profile() {
   touch "${_profile_path}/config"
 }
 
+# Subcommands ##################################################################
+
 git_profile_add() {
-  local _profile_path="$1"
+  local -r _profile_path="$1"
   local -i _status=0
 
   # TODO: support the null-arg case
@@ -130,9 +132,11 @@ git_profile_add() {
     append_info_msg "use \`git profile ${_profile_path##*/} config\` to add profile-specific settings"
 }
 
-###############################################################################
+################################################################################
 
 main() {
+  local _profile_path
+
   # TODO: add support for 'rm' command
   case "$1" in
   'add')
