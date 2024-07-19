@@ -143,6 +143,8 @@ git_profile_add() {
 # to the utility functions below
 git_profile_exec_git_validate_profile() {
   local -r _profile_name="$1"
+  local -rn _profile_config_path_var="$2"
+
   local -i status=0
 
   [[ -z "${_profile_name}" ]] &&
@@ -151,13 +153,13 @@ git_profile_exec_git_validate_profile() {
 
   [[ $status -eq 0 ]] || return 0
 
-  local -r _profile_config_path=$(get_profile_config_path "$_profile_name")
+  _profile_config_path_var=$(get_profile_config_path "$_profile_name")
 
-  ! can_read_profile "$_profile_config_path" &&
+  ! can_read_profile "$_profile_config_path_var" &&
     append_err_msg "cannot validate profile: config does not exist or is not readable" &&
     status=1
 
-  echo "$_profile_config_path"
+  return $status
 }
 
 ################################################################################
@@ -179,7 +181,7 @@ main() {
     ;;
   *)
     _profile_name="$1"
-    _profile_config_path=$(git_profile_exec_git_validate_profile "$_profile_name")
+    git_profile_exec_git_validate_profile "$_profile_name" '_profile_config_path'
     ;;
   esac
 
