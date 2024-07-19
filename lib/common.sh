@@ -10,8 +10,8 @@
 LIBGITPROFILE_COMMON_SH=1
 
 array_append_msg() {
-  local -n _arr="$1"
-  local _msg="${*:2}"
+  local -rn _arr="$1"
+  local -r _msg="${*:2}"
 
   _arr+=("$_msg")
 }

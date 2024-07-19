@@ -88,13 +88,13 @@ print_info_msgs() {
 }
 
 profile_exists() {
-  local _profile_config_path="$1"
+  local -r _profile_config_path="$1"
 
   [[ -e ${_profile_config_path} ]]
 }
 
 can_read_profile() {
-  local _profile_config_path="$1"
+  local -r _profile_config_path="$1"
 
   [[ -r ${_profile_config_path} ]]
 }
