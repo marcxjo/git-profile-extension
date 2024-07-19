@@ -27,7 +27,6 @@ SYNOPSIS
     git profile PROFILE COMMAND [OPTIONS]
     git profile add PROFILE
 
-
 DESCRIPTION
     Parameters:
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-source /usr/share/bash-completion/completions/git
-
 shopt -s nullglob
+
+. /usr/share/bash-completion/completions/git
 
 __git_profile_get_matching_profile_names() {
   local -r cur="$1"
