@@ -185,8 +185,11 @@ main() {
   esac
 
   local -i status=$?
+
   print_log_msgs
+
   [[ $status -ne 0 ]] &&
+    echo &&
     usage &&
     exit $status
 
