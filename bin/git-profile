@@ -116,6 +116,7 @@ init_profile() {
 
 git_profile_add() {
   local -r _profile_name="$1"
+
   local -i _status=0
 
   # TODO: support the null-arg case
@@ -172,6 +173,7 @@ print_log_msgs() {
 main() {
   local _profile_name
   local _profile_config_path
+  local _exec_git
 
   # TODO: add support for 'rm' command
   case "$1" in
@@ -181,7 +183,8 @@ main() {
     ;;
   *)
     _profile_name="$1"
-    git_profile_exec_git_validate_profile "$_profile_name" '_profile_config_path'
+    git_profile_exec_git_validate_profile "$_profile_name" '_profile_config_path' &&
+      _exec_git=1
     ;;
   esac
 
@@ -194,10 +197,10 @@ main() {
     usage &&
     exit $status
 
-  [[ -n "$_profile_config_path" ]] &&
-    exec env GIT_CONFIG_GLOBAL="${_profile_config_path}" git "${@:2}"
+  [[ -n "${_exec_git+1}" ]] &&
+    exec env GIT_CONFIG_GLOBAL="$_profile_config_path" git "${@:2}"
 
-  exit $status
+  return $status
 }
 
 main "$@"
