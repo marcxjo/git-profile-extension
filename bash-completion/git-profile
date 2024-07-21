@@ -67,5 +67,5 @@ _git_profile() {
   COMP_CWORD=$((COMP_CWORD - 2))
   COMP_POINT=$((COMP_POINT - ${#OLD_COMP_SUBSTR} - 1))
 
-  GIT_CONFIG_GLOBAL="$profile" __git_func_wrap __git_main
+  GIT_CONFIG_GLOBAL="$profile" _comp_command_offset 0
 }
