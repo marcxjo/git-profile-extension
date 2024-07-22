@@ -19,7 +19,9 @@ _git_profile() {
   local -r profiles_dir="${GIT_PROFILE_CONFIG_HOME:-${HOME}/.config/git/profiles}"
 
   local -a profiles
-  local -a profile_opt_arg_choices
+
+  local -ar _arg2_subcmds=('add')
+  local -a _arg2_candidates=("${_arg2_subcmds[@]}")
 
   local profile
 
@@ -29,13 +31,13 @@ _git_profile() {
     ;;
   2)
     __git_profile_get_matching_profile_names 'profiles' "$_cur" "$profiles_dir"
-    profile_opt_arg_choices=("${profiles[@]}" 'add')
+    _arg2_candidates+=("${profiles[@]}")
 
-    __gitcomp "${profile_opt_arg_choices[*]}"
+    __gitcomp "${_arg2_candidates[*]}"
     return
     ;;
   *)
-    local -r profile_cmd_arg=${COMP_WORDS[2]}
+    local -r profile_cmd_arg="${COMP_WORDS[2]}"
 
     if [[ "$profile_cmd_arg" == 'add' ]]; then
       # git-profile subcommand - takes no args
@@ -44,7 +46,7 @@ _git_profile() {
 
     __git_profile_get_matching_profile_names 'profiles' "$profile_cmd_arg" "$profiles_dir"
 
-    if [[ "${#profiles[@]}" == 0 ]]; then
+    if [[ ${#profiles[@]} -eq 0 ]]; then
       # Unsupported scenario
       return
     fi
