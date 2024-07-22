@@ -5,15 +5,13 @@ shopt -s nullglob
 . /usr/share/bash-completion/completions/git
 
 __git_profile_get_matching_profile_names() {
-  local -r cur="$1"
-  local -r profiles_dir="$2"
-  local -a profiles=()
+  local -rn profiles_arr="$1"
+  local -r cur="$2"
+  local -r profiles_dir="$3"
 
   for profile_dir in "${profiles_dir%/}/$cur"*; do
-    profiles+=("${profile_dir##*/}")
+    profiles_arr+=("${profile_dir##*/}")
   done
-
-  echo "${profiles[@]}"
 }
 
 _git_profile() {
@@ -30,7 +28,7 @@ _git_profile() {
     return
     ;;
   2)
-    profiles=("$(__git_profile_get_matching_profile_names "$_cur" "$profiles_dir")")
+    __git_profile_get_matching_profile_names 'profiles' "$_cur" "$profiles_dir"
     profile_opt_arg_choices=("${profiles[@]}" 'add')
 
     __gitcomp "${profile_opt_arg_choices[*]}"
@@ -44,7 +42,7 @@ _git_profile() {
       return
     fi
 
-    profiles=("$(__git_profile_get_matching_profile_names "$profile_cmd_arg" "$profiles_dir")")
+    __git_profile_get_matching_profile_names 'profiles' "$profile_cmd_arg" "$profiles_dir"
 
     if [[ "${#profiles[@]}" == 0 ]]; then
       # Unsupported scenario
