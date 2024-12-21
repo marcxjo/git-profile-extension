@@ -15,13 +15,13 @@ __git_profile_get_matching_profile_names() {
 }
 
 _git_profile() {
-  local -r _cur="${COMP_WORDS[COMP_CWORD]}"
+  local -r cur="${COMP_WORDS[COMP_CWORD]}"
   local -r profiles_dir="${GIT_PROFILE_CONFIG_HOME:-${HOME}/.config/git/profiles}"
 
   local -a profiles
 
-  local -ar _arg2_subcmds=('add')
-  local -a _arg2_candidates=("${_arg2_subcmds[@]}")
+  local -ar arg2_subcmds=('add')
+  local -a arg2_candidates=("${arg2_subcmds[@]}")
 
   local profile
 
@@ -30,10 +30,10 @@ _git_profile() {
     return
     ;;
   2)
-    __git_profile_get_matching_profile_names 'profiles' "$_cur" "$profiles_dir"
-    _arg2_candidates+=("${profiles[@]}")
+    __git_profile_get_matching_profile_names 'profiles' "$cur" "$profiles_dir"
+    arg2_candidates+=("${profiles[@]}")
 
-    __gitcomp "${_arg2_candidates[*]}"
+    __gitcomp "${arg2_candidates[*]}"
     return
     ;;
   *)
